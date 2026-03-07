@@ -5,6 +5,7 @@ import {
   MessageCircle, Map, Loader2, ChevronDown, ShieldCheck
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { createContact } from "../config/api";
 
 const Contact = () => {
   // --- STATE MANAGEMENT ---
@@ -67,41 +68,46 @@ const Contact = () => {
     return errors;
   };
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    const errors = validateForm();
+  const handleFormSubmit = async (e) => {
+  e.preventDefault();
 
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      toast.error("Please fix the errors in the form.", {
-        style: { border: '1px solid #EF4444', padding: '16px', color: '#713200' },
-        iconTheme: { primary: '#EF4444', secondary: '#FFFAEE' },
-      });
-      return;
-    }
+  const errors = validateForm();
 
+  if (Object.keys(errors).length > 0) {
+    setFormErrors(errors);
+    toast.error("Please fix the errors in the form.");
+    return;
+  }
+
+  try {
     setIsSubmitting(true);
 
-    // Simulate API call
-    const promise = new Promise((resolve) => setTimeout(resolve, 2000));
+    const response = await createContact(formData);
 
-    toast.promise(promise, {
-      loading: 'Securely transmitting data...',
-      success: 'Inquiry received! We will contact you shortly.',
-      error: 'Transmission failed. Please try again.',
-    }, {
-      style: { minWidth: '250px', fontWeight: 'bold' },
-      success: { duration: 5000, iconTheme: { primary: '#10B981', secondary: 'white' } },
-    });
+    if (response.status === 201) {
+      toast.success("Inquiry sent successfully!");
 
-    promise.then(() => {
-      setIsSubmitting(false);
       setIsSubmitted(true);
-      setFormData({ name: '', email: '', phone: '', company: '', service: '', message: '' });
-      setTimeout(() => setIsSubmitted(false), 6000);
-    });
-  };
 
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        company: "",
+        service: "",
+        message: "",
+      });
+
+      setTimeout(() => setIsSubmitted(false), 6000);
+    }
+
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to send message");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   return (
     <div className="bg-white overflow-hidden font-sans">
       
