@@ -1,0 +1,1 @@
+export const API_BASE_URL = "https://fin-five-server.vercel.app/api";
