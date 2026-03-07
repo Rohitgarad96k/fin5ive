@@ -79,7 +79,7 @@ const WorkWithUs = () => {
     <div className="bg-slate-50 font-sans relative">
 
       {/* 1. Hero Section (Flush with Navbar) */}
-      <section className="relative bg-[#003366] text-white pt-36 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+      <section className="relative bg-[#003366] text-white pt-24 pb-20 lg:pt-24 lg:pb-32 overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-[#FF6600] via-[#003366] to-[#003366]"></div>
         <Briefcase className="absolute -bottom-10 -right-10 w-96 h-96 text-white opacity-5 pointer-events-none" />
         
