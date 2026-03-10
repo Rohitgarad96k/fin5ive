@@ -4,22 +4,22 @@ import {
   ArrowRight, Send, Loader2, Award, TrendingUp, Users 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { submitApplication } from "../config/api"; 
 
 const WorkWithUs = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [resumeFile, setResumeFile] = useState(null); 
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
-    education: '',
-    address: '',
+    phoneNumber: '', 
+    highestEducationQualification: '', 
     city: '',
     state: '',
-    zip: '',
     country: 'India'
   });
 
@@ -30,45 +30,72 @@ const WorkWithUs = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) { 
         toast.error("File size must be less than 5MB");
         setFileName("");
+        setResumeFile(null); 
         fileInputRef.current.value = "";
       } else {
         setFileName(file.name);
+        setResumeFile(file); 
         toast.success("Resume attached successfully!");
       }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => { 
     e.preventDefault();
-    if (!fileName) {
+    
+    if (!resumeFile) {
       toast.error("Please upload your resume before applying.");
       return;
     }
 
     setIsSubmitting(true);
     
-    // Simulate API submission and file upload
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast.success("Application submitted successfully! Our HR team will review your profile.", {
-        duration: 4000,
-        iconTheme: { primary: '#FF6600', secondary: 'white' }
-      });
+    try {
+      // 1. Create a fresh FormData object
+      const submissionData = new FormData();
       
-      // Reset form
-      setFormData({
-        firstName: '', lastName: '', email: '', phone: '',
-        education: '', address: '', city: '', state: '', zip: '', country: 'India'
-      });
-      setFileName("");
-      if(fileInputRef.current) fileInputRef.current.value = "";
+      // 2. Append EXACTLY the text fields the backend schema allows
+      submissionData.append('firstName', formData.firstName);
+      submissionData.append('lastName', formData.lastName);
+      submissionData.append('email', formData.email);
+      submissionData.append('phoneNumber', formData.phoneNumber);
+      submissionData.append('highestEducationQualification', formData.highestEducationQualification);
+      submissionData.append('city', formData.city);
+      submissionData.append('state', formData.state);
+      submissionData.append('country', formData.country);
       
-    }, 2500);
-  };
+      // 3. Append the file specifically as 'resume'
+      submissionData.append('resume', resumeFile);
 
+      // 4. Send to backend
+      const response = await submitApplication(submissionData);
+
+      if (response.status === 201 || response.status === 200) {
+        toast.success("Application submitted successfully! Our HR team will review your profile.", {
+          duration: 4000,
+          iconTheme: { primary: '#FF6600', secondary: 'white' }
+        });
+        
+        // Reset form
+        setFormData({
+          firstName: '', lastName: '', email: '', phoneNumber: '',
+          highestEducationQualification: '', city: '', state: '', country: 'India'
+        });
+        setFileName("");
+        setResumeFile(null);
+        if(fileInputRef.current) fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("Application submission error:", error);
+      toast.error(error.response?.data?.message || "Failed to submit application. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
   const benefits = [
     { icon: <TrendingUp className="w-6 h-6 text-[#FF6600]" />, title: "Accelerated Growth", desc: "Work directly with industry veterans and fast-track your career in corporate finance." },
     { icon: <Award className="w-6 h-6 text-[#FF6600]" />, title: "Elite Clientele", desc: "Manage portfolios and strategies for top HNIs, NRIs, and institutional clients." },
@@ -78,7 +105,7 @@ const WorkWithUs = () => {
   return (
     <div className="bg-slate-50 font-sans relative">
 
-      {/* 1. Hero Section (Flush with Navbar) */}
+      {/* Hero Section */}
       <section className="relative bg-[#003366] text-white pt-24 pb-20 lg:pt-24 lg:pb-32 overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-[#FF6600] via-[#003366] to-[#003366]"></div>
         <Briefcase className="absolute -bottom-10 -right-10 w-96 h-96 text-white opacity-5 pointer-events-none" />
@@ -97,7 +124,7 @@ const WorkWithUs = () => {
         </div>
       </section>
 
-      {/* 2. Main Application Form Section */}
+      {/* Main Application Form Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-16">
@@ -164,37 +191,25 @@ const WorkWithUs = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
-                      <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} className="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#FF6600] outline-none transition-all" placeholder="Phone Number" />
+                      <input type="tel" name="phoneNumber" required value={formData.phoneNumber} onChange={handleInputChange} className="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#FF6600] outline-none transition-all" placeholder="Phone Number" />
                     </div>
                   </div>
 
                   {/* Education */}
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Highest Education Qualification <span className="text-red-500">*</span></label>
-                    <input type="text" name="education" required value={formData.education} onChange={handleInputChange} className="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#FF6600] outline-none transition-all" placeholder="e.g. MBA Finance, CA, CFA" />
+                    <input type="text" name="highestEducationQualification" required value={formData.highestEducationQualification} onChange={handleInputChange} className="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#FF6600] outline-none transition-all" placeholder="e.g. MBA Finance, CA, CFA" />
                   </div>
 
-                  {/* Address Row 1 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Street Address</label>
-                      <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#FF6600] outline-none transition-all" placeholder="Address" />
-                    </div>
+                  {/* Location Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">City <span className="text-red-500">*</span></label>
                       <input type="text" name="city" required value={formData.city} onChange={handleInputChange} className="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#FF6600] outline-none transition-all" placeholder="City" />
                     </div>
-                  </div>
-
-                  {/* Address Row 2 */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">State</label>
                       <input type="text" name="state" value={formData.state} onChange={handleInputChange} className="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#FF6600] outline-none transition-all" placeholder="State" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Zip Code</label>
-                      <input type="text" name="zip" value={formData.zip} onChange={handleInputChange} className="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#FF6600] outline-none transition-all" placeholder="Zip Code" />
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">Country</label>
@@ -208,7 +223,7 @@ const WorkWithUs = () => {
                     </div>
                   </div>
 
-                  {/* Resume Upload */}
+                  {/* Resume Upload (UI Only - File not sent to backend) */}
                   <div className="pt-4 border-t border-gray-100">
                     <label className="block text-sm font-bold text-gray-700 mb-3">Upload Resume (PDF/DOC) <span className="text-red-500">*</span></label>
                     <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-[#FF6600] hover:bg-orange-50 transition-colors relative group">
